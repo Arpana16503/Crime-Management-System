@@ -1,0 +1,224 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta http-equiv="X-UA-Compatible" content="ie=edge">
+    <title>Crime Management System - Complaint Submission with Location</title>
+    <style>
+        /* Basic Reset */
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background-color: #f4f4f4;
+            background-image:url("https://img.freepik.com/premium-photo/microphone-is-being-held-up-by-man-white-shirt_1287512-89066.jpg?w=1060");
+            background-size:cover;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            height: 150vh;
+            padding: 20px;
+            margin: 0;
+            position: relative;
+        }
+
+        .container {
+            background-color: #941515;
+            background-image:url("https://img.freepik.com/premium-photo/microphone-is-being-held-up-by-man-white-shirt_1287512-89066.jpg?w=1060");
+            padding: 30px;
+            border-radius: 12px;
+            box-shadow: 0 10px 20px rgba(0, 0, 0, 0.1);
+            max-width: 800px;
+            width: 100%;
+            height: auto;
+            overflow-y: auto;
+            transition: box-shadow 0.3s ease;
+        }
+
+        .container:hover {
+            box-shadow: 0 12px 25px rgba(0, 0, 0, 0.2);
+        }
+
+        h2 {
+            text-align: center;
+            margin-bottom: 20px;
+            color: #333;
+        }
+
+        form {
+            display: flex;
+            flex-direction: column;
+        }
+
+        textarea, input[type="text"], input[type="date"], input[type="time"], input[type="file"], input[type="submit"] {
+            width: 100%;
+            padding: 15px;
+            margin-bottom: 15px;
+            border: 2px solid #ddd;
+            border-radius: 8px;
+            font-size: 16px;
+            transition: border-color 0.3s ease;
+        }
+
+        textarea:focus, input:focus {
+            outline: none;
+            border-color: #333;
+        }
+
+        input[type="submit"] {
+            background-color: #333;
+            color: white;
+            cursor: pointer;
+            transition: background-color 0.3s ease;
+        }
+
+        input[type="submit"]:hover {
+            background-color: #555;
+        }
+
+        /* Map container */
+        #map {
+            height: 300px;
+            width: 100%;
+            margin-bottom: 15px;
+        }
+
+        /* Emergency Button */
+        .emergency-button {
+            background-color: red;
+            color: white;
+            padding: 15px;
+            text-align: center;
+            border-radius: 8px;
+            font-size: 18px;
+            cursor: pointer;
+            position: fixed;
+            top: 20px;
+            right: 20px;
+            z-index: 10;
+            text-decoration: none;
+            transition: background-color 0.3s ease;
+        }
+
+        .emergency-button:hover {
+            background-color: darkred;
+        }
+
+    </style>
+
+    <script>
+        let map, marker;
+
+        // Initialize and add the map
+        function initMap() {
+            // Default location (if geolocation fails)
+            const defaultLocation = { lat: -34.397, lng: 150.644 };
+
+            // Create the map centered on default location
+            map = new google.maps.Map(document.getElementById("map"), {
+                zoom: 8,
+                center: defaultLocation,
+            });
+
+            // Try to get user's current location
+            getLocation();
+        }
+
+        function getLocation() {
+            if (navigator.geolocation) {
+                navigator.geolocation.getCurrentPosition(showPosition, showError);
+            } else {
+                alert("Geolocation is not supported by this browser.");
+            }
+        }
+
+        function showPosition(position) {
+            const pos = {
+                lat: position.coords.latitude,
+                lng: position.coords.longitude,
+            };
+
+            // Set the map center to the user's location
+            map.setCenter(pos);
+
+            // Add a marker for the user's location
+            marker = new google.maps.Marker({
+                position: pos,
+                map: map,
+                title: "Your Location",
+            });
+
+            // Set latitude and longitude fields in the form
+            document.getElementById('latitude').value = pos.lat;
+            document.getElementById('longitude').value = pos.lng;
+        }
+
+        function showError(error) {
+            let errorMessage = '';
+            switch (error.code) {
+                case error.PERMISSION_DENIED:
+                    errorMessage = "User denied the request for Geolocation.";
+                    break;
+                case error.POSITION_UNAVAILABLE:
+                    errorMessage = "Location information is unavailable.";
+                    break;
+                case error.TIMEOUT:
+                    errorMessage = "The request to get user location timed out.";
+                    break;
+                case error.UNKNOWN_ERROR:
+                    errorMessage = "An unknown error occurred.";
+                    break;
+            }
+            alert(errorMessage);
+        }
+
+        function validateComplaintForm() {
+            let complaint = document.forms["complaintForm"]["complaint"].value;
+            let evidence = document.forms["complaintForm"]["evidence"].value;
+            let date = document.forms["complaintForm"]["date"].value;
+            let time = document.forms["complaintForm"]["time"].value;
+            let location = document.forms["complaintForm"]["location"].value;
+
+            if (complaint === "" || evidence === "" || date === "" || time === "" || location === "") {
+                alert("Please fill in all required fields, including date, time, and location.");
+                return false;
+            }
+
+            return true;
+        }
+    </script>
+</head>
+<body>
+
+    <!-- Emergency Help Button -->
+    <a href="tel:911" class="emergency-button">Call Emergency</a>
+
+    <!-- User Complaint Form -->
+    <div class="container">
+        <h2>Submit Your Complaint</h2>
+        <form name="complaintForm" action="http://localhost:5000/submitComplaint" method="POST" enctype="multipart/form-data" onsubmit="return validateComplaintForm()">
+            <textarea name="complaint" placeholder="Describe your complaint here..." rows="4" required></textarea>
+            <input type="date" name="date" required>
+            <input type="time" name="time" required>
+            <input type="text" name="location" placeholder="Enter the location" required>
+            <input type="file" name="evidence" accept="image/*,application/pdf,video/*" required>
+            <input type="hidden" id="latitude" name="latitude">
+            <input type="hidden" id="longitude" name="longitude">
+            <input type="submit" value="Submit Complaint">
+        </form>
+
+        <!-- Map to display user's current location -->
+        <div id="map"></div>
+        <a href="weblogin.html" class="btn">Sign Up!</a>
+    </div>
+
+    <!-- Google Maps API -->
+    <script src="https://maps.googleapis.com/maps/api/js?key=YOUR_API_KEY&callback=initMap" async defer></script>
+
+</body>
+</html>
